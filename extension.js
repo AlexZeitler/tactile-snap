@@ -1,6 +1,11 @@
-const {Clutter, GLib, GObject, Meta, Shell, St} = imports.gi;
-const Main = imports.ui.main;
-const ExtensionUtils = imports.misc.extensionUtils;
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const Tile = GObject.registerClass(
     class Tile extends St.BoxLayout {
@@ -29,21 +34,17 @@ const Tile = GObject.registerClass(
     }
 );
 
-class Extension {
-    constructor() {
-        this._settings = null;
+export default class TactileExtension extends Extension {
+    enable() {
         this._tiles = [];
         this._window = null;
         this._monitor = null;
         this._tile = null;
         this._date = null;
         this._sourceIds = [];
-    }
-
-    enable() {
-        this._settings = ExtensionUtils.getSettings();
+        this._settings = this.getSettings();
         this.bindKey('show-tiles', () => this.onShowTiles());
-        this.bindKey('show-settings', () => ExtensionUtils.openPrefs());
+        this.bindKey('show-settings', () => this.openPreferences());
     }
 
     disable() {
@@ -438,6 +439,3 @@ class Extension {
     }
 }
 
-function init() {
-    return new Extension();
-}

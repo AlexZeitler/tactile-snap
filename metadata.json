@@ -4,16 +4,8 @@
   "description": "Tile windows on a custom grid using your keyboard. Type Super-T to show the grid, then type two tiles (or the same tile twice) to move the active window.\n\nThe grid can be up to 4x3 (corresponding to one hand on the keyboard) and each row/column can be weighted to take up more or less space.",
   "url": "https://gitlab.com/lundal/tactile",
   "settings-schema": "org.gnome.shell.extensions.tactile",
-  "version": 27,
+  "version": 28,
   "shell-version": [
-    "44",
-    "43",
-    "42",
-    "41",
-    "40",
-    "3.38",
-    "3.36",
-    "3.34",
-    "3.32"
+    "45"
   ]
 }

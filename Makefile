@@ -12,7 +12,7 @@ install: $(zip)
 clean:
 	rm -f $(zip) $(schema)
 
-$(zip): *.json *.js *.css schemas/*.xml $(schema)
+$(zip): *.json *.js preferences/*.js *.css schemas/*.xml $(schema)
 	zip - $^ > $@
 
 $(schema): schemas/*.xml
