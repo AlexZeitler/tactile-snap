@@ -81,6 +81,10 @@ export const KeyboardShortcutsPage = GObject.registerClass(
             const group = new Adw.PreferencesGroup();
             group.add(grid);
             this.add(group);
+
+            // Adw.PreferencesPage disables horizontal scrolling, but we need it
+            // https://gitlab.gnome.org/GNOME/libadwaita/-/blob/main/src/adw-preferences-page.ui
+            (this.get_first_child() as Gtk.ScrolledWindow).hscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
         }
     },
 );

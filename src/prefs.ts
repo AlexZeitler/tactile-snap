@@ -27,5 +27,13 @@ export default class TactilePreferences extends ExtensionPreferences {
         window.add(new LayoutPage(settings, 4));
         window.add(new KeyboardShortcutsPage(settings));
         window.add(new AdvancedPage(settings));
+
+        // Set appropriate window size based on number of columns
+        const num_cols = settings.get_int("grid-cols");
+        const desired_width = Math.max(800, 102 + 141 * num_cols);
+        const desired_height = 600;
+
+        window.set_default_size(desired_width, desired_height);
+        window.set_size_request(600, 400);
     }
 }
