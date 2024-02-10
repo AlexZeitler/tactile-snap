@@ -9,21 +9,13 @@
     "@girs/gnome-shell": "45.0.0-beta8",
     "@girs/gtk-4.0": "4.12.4-3.2.7",
     "@girs/mtk-13": "13.0.0-3.2.7",
-    "copyfiles": "2.4",
     "prettier": "3.2",
-    "rimraf": "5.0",
     "typescript": "5.3"
   },
   "scripts": {
-    "clean": "rimraf build",
+    "clean": "rm -rf build",
     "format": "prettier --write src",
-    "check-format": "prettier --check src",
-    "check-ts": "tsc --noEmit",
-    "compile-ts": "tsc --outDir build",
-    "copy-styles": "copyup 'src/**/*.css' build",
-    "copy-metadata": "copyup 'src/metadata.json' build",
-    "copy-schemas": "copyup 'src/schemas/*.xml' build",
-    "check": "npm run check-format && npm run check-ts",
-    "build": "npm run check-format && npm run compile-ts && npm run copy-styles && npm run copy-metadata && npm run copy-schemas"
+    "check": "prettier --check src && glib-compile-schemas --strict --dry-run src/schemas",
+    "build": "tsc --outDir build && cp src/metadata.json src/*.css src/schemas/*.xml build"
   }
 }
