@@ -1,83 +1,84 @@
-import GObject from 'gi://GObject';
+import GObject from "gi://GObject";
 import Gio from "gi://Gio";
-import Gtk from 'gi://Gtk';
-import Adw from 'gi://Adw';
+import Gtk from "gi://Gtk";
+import Adw from "gi://Adw";
 
-import { buildNumberWidget } from './common.js';
+import { buildNumberWidget } from "./common.js";
 
-type Layout = { cols: number[], rows: number[] };
-type Area = { x: number, y: number, width: number, height: number };
+type Layout = { cols: number[]; rows: number[] };
+type Area = { x: number; y: number; width: number; height: number };
 
 export const LayoutPage = GObject.registerClass(
-class LayoutPage extends Adw.PreferencesPage {
-    constructor(settings: Gio.Settings, n: number) {
-        super({
-            title: `Layout ${n}`,
-            icon_name: 'preferences-desktop-display-symbolic',
-            name: `LayoutPage${n}`,
-        });
+    class LayoutPage extends Adw.PreferencesPage {
+        constructor(settings: Gio.Settings, n: number) {
+            super({
+                title: `Layout ${n}`,
+                icon_name: "preferences-desktop-display-symbolic",
+                name: `LayoutPage${n}`,
+            });
 
-        const grid = new Gtk.Grid({
-            halign: Gtk.Align.CENTER,
-            margin_start: 12,
-            margin_end: 12,
-            margin_top: 12,
-            margin_bottom: 12,
-            column_spacing: 12,
-            row_spacing: 12,
-            visible: true
-        });
+            const grid = new Gtk.Grid({
+                halign: Gtk.Align.CENTER,
+                margin_start: 12,
+                margin_end: 12,
+                margin_top: 12,
+                margin_bottom: 12,
+                column_spacing: 12,
+                row_spacing: 12,
+                visible: true,
+            });
 
-        const weightsLabel = new Gtk.Label({
-            label: '<b>Column/row weights</b>',
-            use_markup: true,
-            visible: true
-        });
-        grid.attach(weightsLabel, 0, 0, 1, 1);
-        grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
-
-        // Recreate WeightsWidget when grid size changes
-        function recreateWeightsWidget() {
-            grid.remove(grid.get_child_at(0, 1)!);
+            const weightsLabel = new Gtk.Label({
+                label: "<b>Column/row weights</b>",
+                use_markup: true,
+                visible: true,
+            });
+            grid.attach(weightsLabel, 0, 0, 1, 1);
             grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
+
+            // Recreate WeightsWidget when grid size changes
+            function recreateWeightsWidget() {
+                grid.remove(grid.get_child_at(0, 1)!);
+                grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
+            }
+            settings.connect("changed::grid-cols", recreateWeightsWidget);
+            settings.connect("changed::grid-rows", recreateWeightsWidget);
+
+            const weightsFootnote = new Gtk.Label({
+                label: "Tip: Set weight to 0 to remove any column/row from this layout",
+                visible: true,
+            });
+            grid.attach(weightsFootnote, 0, 2, 1, 1);
+
+            const group = new Adw.PreferencesGroup();
+            group.add(grid);
+            this.add(group);
         }
-        settings.connect('changed::grid-cols', recreateWeightsWidget);
-        settings.connect('changed::grid-rows', recreateWeightsWidget);
-
-        const weightsFootnote = new Gtk.Label({
-            label: 'Tip: Set weight to 0 to remove any column/row from this layout',
-            visible: true
-        });
-        grid.attach(weightsFootnote, 0, 2, 1, 1);
-
-        const group = new Adw.PreferencesGroup();
-        group.add(grid);
-        this.add(group);
-    }
-});
+    },
+);
 
 function buildWeightsWidget(settings: Gio.Settings, n: number): Gtk.Grid {
-    const num_cols = settings.get_int('grid-cols');
-    const num_rows = settings.get_int('grid-rows');
+    const num_cols = settings.get_int("grid-cols");
+    const num_rows = settings.get_int("grid-rows");
 
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
         row_spacing: 12,
-        visible: true
+        visible: true,
     });
 
     const prefix = layoutPrefix(n);
 
     // Column weights
     for (let col = 0; col < num_cols; col++) {
-        const widget = buildNumberWidget(settings, `${prefix}col-${col}`)
+        const widget = buildNumberWidget(settings, `${prefix}col-${col}`);
         grid.attach(widget, col + 1, 0, 1, 1);
     }
 
     // Row weights
     for (let row = 0; row < num_rows; row++) {
-        const widget = buildNumberWidget(settings, `${prefix}row-${row}`)
+        const widget = buildNumberWidget(settings, `${prefix}row-${row}`);
         grid.attach(widget, 0, row + 1, 1, 1);
     }
 
@@ -92,13 +93,13 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     const grid = new Gtk.Grid({
         column_homogeneous: true,
         row_homogeneous: true,
-        visible: true
+        visible: true,
     });
 
     let tiles: Gtk.Label[] = [];
 
     function discardTiles(): void {
-        tiles.forEach(tile => grid.remove(tile));
+        tiles.forEach((tile) => grid.remove(tile));
         tiles = [];
     }
 
@@ -111,13 +112,13 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
                     return;
                 }
                 const id = `tile-${col}-${row}`;
-                const name = settings.get_strv(id)[0] || '';
+                const name = settings.get_strv(id)[0] || "";
                 const area = calculateArea(layout, col, row);
 
                 const tile = new Gtk.Label({
                     halign: Gtk.Align.FILL,
                     label: name.toUpperCase(),
-                    visible: true
+                    visible: true,
                 });
                 tile.get_style_context().add_class("tile");
 
@@ -129,10 +130,10 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
         if (tiles.length < 1) {
             const tile = new Gtk.Label({
                 halign: Gtk.Align.FILL,
-                label: 'Error: No tiles',
-                visible: true
+                label: "Error: No tiles",
+                visible: true,
             });
-            tile.get_style_context().add_class('error-tile');
+            tile.get_style_context().add_class("error-tile");
 
             grid.attach(tile, 0, 0, 1, 1);
             tiles.push(tile);
@@ -141,10 +142,10 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
 
     createTiles();
 
-    settings.connect('changed', () => {
+    settings.connect("changed", () => {
         discardTiles();
         createTiles();
-    })
+    });
 
     return grid;
 }
@@ -158,10 +159,11 @@ function layoutPrefix(n: number): string {
 }
 
 function loadLayout(settings: Gio.Settings, n: number): Layout {
-    const num_cols = settings.get_int('grid-cols');
-    const num_rows = settings.get_int('grid-rows');
+    const num_cols = settings.get_int("grid-cols");
+    const num_rows = settings.get_int("grid-rows");
 
-    const cols: number[] = [], rows: number[] = [];
+    const cols: number[] = [],
+        rows: number[] = [];
     const prefix = layoutPrefix(n);
 
     for (let col = 0; col < num_cols; col++) {
@@ -171,7 +173,7 @@ function loadLayout(settings: Gio.Settings, n: number): Layout {
         rows.push(settings.get_int(`${prefix}row-${row}`));
     }
 
-    return {cols: cols, rows: rows};
+    return { cols: cols, rows: rows };
 }
 
 function calculateArea(layout: Layout, col: number, row: number): Area {
@@ -179,9 +181,9 @@ function calculateArea(layout: Layout, col: number, row: number): Area {
     const rowStart = sumUntil(layout.rows, row);
     const colEnd = sumUntil(layout.cols, col + 1);
     const rowEnd = sumUntil(layout.rows, row + 1);
-    return {x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart};
+    return { x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart };
 }
 
 function sumUntil(list: number[], index: number): number {
-    return list.reduce((prev, curr, i) => i < index ? prev + curr : prev, 0);
+    return list.reduce((prev, curr, i) => (i < index ? prev + curr : prev), 0);
 }
