@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
-export function buildNumberWidget(settings, id, min = 0, max = 1000) {
+export function buildNumberWidget(settings: Gio.Settings, id: string, min: number = 0, max: number = 1000): Gtk.SpinButton {
     const spin = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
             lower: min,

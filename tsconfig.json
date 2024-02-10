@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true,
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "types": [
+      "@girs/gjs",
+      "@girs/adw-1/ambient",
+      "@girs/gdk-4.0/ambient",
+      "@girs/gio-2.0/ambient",
+      "@girs/gtk-4.0/ambient",
+      "@girs/mtk-13/ambient",
+      "@girs/gnome-shell/ambient",
+      "@girs/gnome-shell/extensions/global"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

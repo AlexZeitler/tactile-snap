@@ -1,11 +1,15 @@
 import GObject from 'gi://GObject';
+import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
+
+type Shortcut = { id: string, desc: string };
 
 const COLUMN_KEY = 0;
 const COLUMN_MODS = 1;
 
-const GENERAL_SHORTCUTS = [
+const GENERAL_SHORTCUTS: Shortcut[] = [
     {id: 'show-tiles', desc: 'Show tiles'},
     {id: 'hide-tiles', desc: 'Hide tiles'},
     {id: 'next-monitor', desc: 'Move tiles to next monitor'},
@@ -13,7 +17,7 @@ const GENERAL_SHORTCUTS = [
     {id: 'show-settings', desc: 'Open extension settings'},
 ];
 
-const LAYOUT_SHORTCUTS = [
+const LAYOUT_SHORTCUTS: Shortcut[] = [
     {id: 'layout-1', desc: 'Layout 1'},
     {id: 'layout-2', desc: 'Layout 2'},
     {id: 'layout-3', desc: 'Layout 3'},
@@ -22,8 +26,8 @@ const LAYOUT_SHORTCUTS = [
 
 export const KeyboardShortcutsPage = GObject.registerClass(
 class KeyboardShortcutsPage extends Adw.PreferencesPage {
-    _init(settings) {
-        super._init({
+    constructor(settings: Gio.Settings) {
+        super({
             title: "Keyboard Shortcuts",
             icon_name: 'input-keyboard-symbolic',
             name: "KeyboardShortcuts",
@@ -40,7 +44,7 @@ class KeyboardShortcutsPage extends Adw.PreferencesPage {
             visible: true
         });
 
-        const allTreeViews = [];
+        const allTreeViews: Gtk.TreeView[] = [];
 
         const tileLabel = new Gtk.Label({
             label: '<b>Tile activation keys</b>',
@@ -52,7 +56,7 @@ class KeyboardShortcutsPage extends Adw.PreferencesPage {
 
         // Recreate TileKeyboardShortcutsWidget when grid size changes
         function recreateTileKeyboardShortcutsWidget() {
-            grid.remove(grid.get_child_at(0, 1));
+            grid.remove(grid.get_child_at(0, 1)!);
             grid.attach(buildTileKeyboardShortcutsWidget(settings, allTreeViews), 0, 1, 2, 1);
         }
         settings.connect('changed::grid-cols', recreateTileKeyboardShortcutsWidget);
@@ -81,7 +85,7 @@ class KeyboardShortcutsPage extends Adw.PreferencesPage {
 });
 
 
-function buildTileKeyboardShortcutsWidget(settings, allTreeViews) {
+function buildTileKeyboardShortcutsWidget(settings: Gio.Settings, allTreeViews: Gtk.TreeView[]): Gtk.Grid {
     const num_cols = settings.get_int('grid-cols');
     const num_rows = settings.get_int('grid-rows');
 
@@ -123,7 +127,7 @@ function buildTileKeyboardShortcutsWidget(settings, allTreeViews) {
     return grid;
 }
 
-function buildKeyboardShortcutsWidget(settings, shortcuts, allTreeViews) {
+function buildKeyboardShortcutsWidget(settings: Gio.Settings, shortcuts: Shortcut[], allTreeViews: Gtk.TreeView[]): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -148,7 +152,7 @@ function buildKeyboardShortcutsWidget(settings, shortcuts, allTreeViews) {
 
 // The only widget for capturing accelerators is CellRendererAccel
 // It must be embedded in a TreeView, which adds a lot of complexity
-function buildAcceleratorWidget(settings, id, allTreeViews) {
+function buildAcceleratorWidget(settings: Gio.Settings, id: string, allTreeViews: Gtk.TreeView[]): Gtk.TreeView {
     // Model
     const model = new Gtk.ListStore();
     model.set_column_types([GObject.TYPE_INT, GObject.TYPE_INT]);
@@ -159,16 +163,16 @@ function buildAcceleratorWidget(settings, id, allTreeViews) {
         accel_mode: Gtk.CellRendererAccelMode.GTK,
         editable: true
     });
-    renderer.connect('accel-edited', function (renderer, path, key, mods) {
-        const [ok, iter] = model.get_iter_from_string(path);
+    renderer.connect('accel-edited', function (_, path, key, mods) {
+        const [ok, iter] = model.get_iter_from_string(path!);
         if (!ok) {
             return;
         }
         model.set(iter, [COLUMN_KEY, COLUMN_MODS], [key, mods]);
-        settings.set_strv(id, [Gtk.accelerator_name(key, mods)]);
+        settings.set_strv(id, [Gtk.accelerator_name(key, mods)!]);
     });
-    renderer.connect('accel-cleared', function (renderer, path) {
-        const [ok, iter] = model.get_iter_from_string(path);
+    renderer.connect('accel-cleared', function (_, path) {
+        const [ok, iter] = model.get_iter_from_string(path!);
         if (!ok) {
             return;
         }
@@ -205,9 +209,9 @@ function buildAcceleratorWidget(settings, id, allTreeViews) {
     return treeView;
 }
 
-function parseAccelerator(settings, id) {
+function parseAccelerator(settings: Gio.Settings, id: string): [number, Gdk.ModifierType] {
     const accelerator = settings.get_strv(id)[0] || '';
-    const [ok, key, mods] = Gtk.accelerator_parse(accelerator);
+    const [_, key, mods] = Gtk.accelerator_parse(accelerator);
     return [key, mods];
 }
 

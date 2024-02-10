@@ -1,7 +1,7 @@
 .PHONY: build clean test-wayland follow-log
 
 zip = tactile@lundal.io.zip
-schema = schemas/gschemas.compiled
+schema = src/schemas/gschemas.compiled
 
 build: $(zip)
 
@@ -10,13 +10,16 @@ install: $(zip)
 	unzip -o $(zip) -d ~/.local/share/gnome-shell/extensions/tactile@lundal.io/
 
 clean:
-	rm -f $(zip) $(schema)
+	npm run clean
+	rm -f $(zip)
 
-$(zip): *.json *.js preferences/*.js *.css schemas/*.xml $(schema)
-	zip - $^ > $@
+$(zip): $(wildcard src/*) $(schema)
+	npm ci
+	npm run build
+	(cd build && zip -r - *) > $@
 
-$(schema): schemas/*.xml
-	glib-compile-schemas --strict schemas
+$(schema): src/schemas/*.xml
+	glib-compile-schemas --strict src/schemas
 
 test-wayland:
 	dbus-run-session -- gnome-shell --nested --wayland

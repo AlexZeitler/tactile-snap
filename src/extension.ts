@@ -1,16 +1,33 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Gio from "gi://Gio";
+import Mtk from 'gi://Mtk';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
+type Layout = { cols: number[], rows: number[], gapsize: number };
+type Area = { x: number, y: number, width: number, height: number };
+type Styles = {
+    textColor: string,
+    borderColor: string,
+    backgroundColor: string,
+    textSize: number,
+    borderSize: number,
+};
+type TileDef = {
+    id: string,
+    area: Area,
+    actor: Clutter.Actor
+}
+
 const Tile = GObject.registerClass(
     class Tile extends St.BoxLayout {
-        _init(area, name, styles) {
-            super._init({
+        constructor(area: Area, name: string, styles: Styles) {
+            super({
                 style_class: 'tile',
                 style: `border-color: ${styles.borderColor};`
                     + `background-color: ${styles.backgroundColor};`
@@ -35,19 +52,21 @@ const Tile = GObject.registerClass(
 );
 
 export default class TactileExtension extends Extension {
-    enable() {
-        this._tiles = [];
-        this._window = null;
-        this._monitor = null;
-        this._tile = null;
-        this._date = null;
-        this._sourceIds = [];
+    private _tiles: TileDef[] = [];
+    private _window: Meta.Window | null = null;
+    private _monitor: number | null = null;
+    private _tile: TileDef | null = null;
+    private _date: number | null = null;
+    private _sourceIds: number[] = [];
+    private _settings: Gio.Settings | null = null;
+
+    enable(): void {
         this._settings = this.getSettings();
         this.bindKey('show-tiles', () => this.onShowTiles());
         this.bindKey('show-settings', () => this.openPreferences());
     }
 
-    disable() {
+    disable(): void {
         // In case the extension is disabled while sources are still active
         this.removeSources();
 
@@ -59,42 +78,42 @@ export default class TactileExtension extends Extension {
         this._settings = null;
     }
 
-    removeSources() {
+    removeSources(): void {
         this._sourceIds.forEach(sourceId => GLib.Source.remove(sourceId))
         this._sourceIds = [];
     }
 
-    addSourceToList(sourceId) {
+    addSourceToList(sourceId: number): void {
         this._sourceIds.push(sourceId);
     }
 
-    removeSourceFromList(sourceId) {
+    removeSourceFromList(sourceId: number): void {
         this._sourceIds = this._sourceIds.filter(id => id !== sourceId);
     }
 
-    bindKey(key, callback) {
-        Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.IGNORE_AUTOREPEAT, Shell.ActionMode.NORMAL, callback);
+    bindKey(key: string, callback: Meta.KeyHandlerFunc): void {
+        Main.wm.addKeybinding(key, this._settings!, Meta.KeyBindingFlags.IGNORE_AUTOREPEAT, Shell.ActionMode.NORMAL, callback);
     }
 
-    unbindKey(key) {
+    unbindKey(key: string): void {
         Main.wm.removeKeybinding(key);
     }
 
-    onShowTiles() {
+    onShowTiles(): void {
         if (this._tiles.length > 0) {
             this.discardTiles();
         } else {
-            this.displayTiles(null);
+            this.displayTiles(null, null);
         }
     }
 
-    onHideTiles() {
+    onHideTiles(): void {
         if (this._tiles.length > 0) {
             this.discardTiles();
         }
     }
 
-    onActivateTile(tile) {
+    onActivateTile(tile: TileDef): void {
         const lastTile = this._tile;
         const lastDate = this._date;
 
@@ -105,32 +124,32 @@ export default class TactileExtension extends Extension {
             return;
         }
         // Once two tiles are activated, move the window
-        this.moveWindow(this._window, this.combineAreas(lastTile.area, tile.area));
+        this.moveWindow(this._window!, this.combineAreas(lastTile!.area, tile.area));
         this.discardTiles();
 
         this._tile = null;
         this._date = null;
     }
 
-    onNextMonitor() {
+    onNextMonitor(): void {
         if (this._monitor != null) {
             const nextMonitor = (this._monitor + 1) % this.getNumMonitors();
             this.discardTiles();
-            this.displayTiles(nextMonitor);
+            this.displayTiles(nextMonitor, null);
         }
     }
 
-    onPrevMonitor() {
+    onPrevMonitor(): void {
         if (this._monitor != null) {
             const prevMonitor = (this._monitor - 1 + this.getNumMonitors()) % this.getNumMonitors();
             this.discardTiles();
-            this.displayTiles(prevMonitor);
+            this.displayTiles(prevMonitor, null);
         }
     }
 
-    onActivateLayout(n) {
+    onActivateLayout(n: number): void {
         // Save the new layout for current monitor
-        this.saveMonitorLayout(this._settings, this._monitor, n);
+        this.saveMonitorLayout(this._settings!, this._monitor!, n);
 
         // Remember the active monitor and window
         const monitor = this._monitor;
@@ -140,7 +159,7 @@ export default class TactileExtension extends Extension {
         this.displayTiles(monitor, window);
     }
 
-    displayTiles(monitor, window) {
+    displayTiles(monitor: number | null, window: Meta.Window | null): void {
         this.debug("Display tiles (begin)");
 
         // Find active window
@@ -153,8 +172,8 @@ export default class TactileExtension extends Extension {
 
         // Create tiles
         const workarea = this.getWorkAreaForMonitor(activeMonitor);
-        const layoutNumber = this.loadMonitorLayout(this._settings, activeMonitor);
-        const layout = this.loadLayout(this._settings, layoutNumber);
+        const layoutNumber = this.loadMonitorLayout(this._settings!, activeMonitor);
+        const layout = this.loadLayout(this._settings!, layoutNumber);
         const tiles = this.createTiles(workarea, layout);
         if (tiles.length < 1) {
             this.debug('No tiles');
@@ -184,7 +203,7 @@ export default class TactileExtension extends Extension {
         this.debug("Display tiles (finish)");
     }
 
-    discardTiles() {
+    discardTiles(): void {
         this.debug("Discard tiles (begin)");
 
         // Unbind keys
@@ -211,7 +230,7 @@ export default class TactileExtension extends Extension {
         this.debug("Discard tiles (finish)");
     }
 
-    layoutPrefix(n) {
+    layoutPrefix(n: number): string {
         // For legacy reasons, layout 1 does not have a prefix
         if (n === 1) {
             return "";
@@ -219,15 +238,15 @@ export default class TactileExtension extends Extension {
         return `layout-${n}-`;
     }
 
-    saveMonitorLayout(settings, monitor, layout) {
+    saveMonitorLayout(settings: Gio.Settings, monitor: number, layout: number): void {
         settings.set_int(`monitor-${monitor}-layout`, layout);
     }
 
-    loadMonitorLayout(settings, monitor) {
+    loadMonitorLayout(settings: Gio.Settings, monitor: number): number {
         return settings.get_int(`monitor-${monitor}-layout`);
     }
 
-    loadLayout(settings, n) {
+    loadLayout(settings: Gio.Settings, n: number): Layout {
         const num_cols = settings.get_int('grid-cols');
         const num_rows = settings.get_int('grid-rows');
 
@@ -246,9 +265,9 @@ export default class TactileExtension extends Extension {
         return {cols: cols, rows: rows, gapsize: gapsize};
     }
 
-    createTiles(workarea, layout) {
-        const styles = this.loadStyles(this._settings);
-        const tiles = [];
+    createTiles(workarea: Area, layout: Layout): TileDef[] {
+        const styles = this.loadStyles(this._settings!);
+        const tiles: TileDef[] = [];
 
         layout.cols.forEach((col_weight, col) => {
             layout.rows.forEach((row_weight, row) => {
@@ -256,7 +275,7 @@ export default class TactileExtension extends Extension {
                     return;
                 }
                 const id = `tile-${col}-${row}`;
-                const name = this._settings.get_strv(id)[0] || '';
+                const name = this._settings!.get_strv(id)[0] || '';
                 const area = this.calculateAreaWithGaps(workarea, layout, col, row);
                 const tile = {id: id, area: area, actor: new Tile(area, name, styles)};
                 tiles.push(tile);
@@ -266,23 +285,23 @@ export default class TactileExtension extends Extension {
         return tiles;
     }
 
-    loadStyles(settings) {
+    loadStyles(settings: Gio.Settings): Styles {
         return {
-            textColor: settings.get_string('text-color'),
-            borderColor: settings.get_string('border-color'),
-            backgroundColor: settings.get_string('background-color'),
+            textColor: settings.get_string('text-color')!,
+            borderColor: settings.get_string('border-color')!,
+            backgroundColor: settings.get_string('background-color')!,
             textSize: settings.get_int('text-size'),
             borderSize: settings.get_int('border-size'),
         };
     }
 
-    calculateAreaWithGaps(workarea, layout, col, row) {
+    calculateAreaWithGaps(workarea: Area, layout: Layout, col: number, row: number): Area {
         const shrunkWorkarea = this.shrinkArea(workarea, layout.gapsize, layout.gapsize, 0, 0)
         const area = this.calculateArea(shrunkWorkarea, layout, col, row);
         return this.shrinkArea(area, 0, 0, layout.gapsize, layout.gapsize);
     }
 
-    calculateArea(workarea, layout, col, row) {
+    calculateArea(workarea: Area, layout: Layout, col: number, row: number): Area {
         const colStart = Math.floor(workarea.x + workarea.width * this.sumUntil(layout.cols, col) / this.sumAll(layout.cols));
         const rowStart = Math.floor(workarea.y + workarea.height * this.sumUntil(layout.rows, row) / this.sumAll(layout.rows));
         const colEnd = Math.floor(workarea.x + workarea.width * this.sumUntil(layout.cols, col + 1) / this.sumAll(layout.cols));
@@ -290,7 +309,7 @@ export default class TactileExtension extends Extension {
         return {x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart};
     }
 
-    combineAreas(area1, area2) {
+    combineAreas(area1: Area, area2: Area): Area {
         const colStart = Math.min(area1.x, area2.x);
         const rowStart = Math.min(area1.y, area2.y);
         const colEnd = Math.max(area1.x + area1.width, area2.x + area2.width);
@@ -298,7 +317,7 @@ export default class TactileExtension extends Extension {
         return {x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart};
     }
 
-    shrinkArea(area, top, right, bottom, left) {
+    shrinkArea(area: Area, top: number, right: number, bottom: number, left: number): Area {
         return {
             x: area.x + left,
             y: area.y + top,
@@ -307,11 +326,11 @@ export default class TactileExtension extends Extension {
         };
     }
 
-    stringifyArea(area) {
+    stringifyArea(area: Area): string {
         return `{ x: ${area.x}, y: ${area.y}, width: ${area.width}, height: ${area.height} }`;
     }
 
-    moveWindow(window, area) {
+    moveWindow(window: Meta.Window, area: Area) {
         if (!window) {
             return;
         }
@@ -329,7 +348,7 @@ export default class TactileExtension extends Extension {
 
         window.move_resize_frame(true, area.x, area.y, area.width, area.height);
 
-        if (this._settings.get_boolean("maximize")) {
+        if (this._settings!.get_boolean("maximize")) {
             if (this.isEntireWorkAreaWidth(area)) {
                 window.maximize(Meta.MaximizeFlags.HORIZONTAL);
             } else {
@@ -375,7 +394,7 @@ export default class TactileExtension extends Extension {
         this.addSourceToList(sourceId);
     }
 
-    isEntireWorkAreaWidth(area) {
+    isEntireWorkAreaWidth(area: Area): boolean {
         const monitors = this.getNumMonitors();
         for (let i = 0; i < monitors; i++) {
             const workarea = this.getWorkAreaForMonitor(i);
@@ -386,7 +405,7 @@ export default class TactileExtension extends Extension {
         return false;
     }
 
-    isEntireWorkAreaHeight(area) {
+    isEntireWorkAreaHeight(area: Area): boolean {
         const monitors = this.getNumMonitors();
         for (let i = 0; i < monitors; i++) {
             const workarea = this.getWorkAreaForMonitor(i);
@@ -397,43 +416,43 @@ export default class TactileExtension extends Extension {
         return false;
     }
 
-    isWithinWorkArea(area, workarea) {
+    isWithinWorkArea(area: Area, workarea: Area): boolean {
         return area.x >= workarea.x
             && area.y >= workarea.y
             && area.x + area.width <= workarea.x + workarea.width
             && area.y + area.height <= workarea.y + workarea.height;
     }
 
-    getNumMonitors() {
+    getNumMonitors(): number {
         return global.workspace_manager
             .get_active_workspace()
             .get_display()
             .get_n_monitors();
     }
 
-    getWorkAreaForMonitor(monitor) {
+    getWorkAreaForMonitor(monitor: number): Mtk.Rectangle {
         return global.workspace_manager
             .get_active_workspace()
             .get_work_area_for_monitor(monitor);
     }
 
-    getActiveWindow() {
+    getActiveWindow(): Meta.Window | null {
         return global.workspace_manager
             .get_active_workspace()
             .list_windows()
-            .find(window => window.has_focus());
+            .find(window => window.has_focus()) ?? null;
     }
 
-    sumUntil(list, index) {
+    sumUntil(list: number[], index: number): number {
         return list.reduce((prev, curr, i) => i < index ? prev + curr : prev, 0);
     }
 
-    sumAll(list) {
+    sumAll(list: number[]): number {
         return list.reduce((prev, curr) => prev + curr, 0);
     }
 
-    debug(message) {
-        if (this._settings.get_boolean("debug")) {
+    debug(message: string): void {
+        if (this._settings!.get_boolean("debug")) {
             log("Tactile: " + message);
         }
     }

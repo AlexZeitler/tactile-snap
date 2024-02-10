@@ -25,8 +25,8 @@ const GRID_SIZES = [
 
 export const AdvancedPage = GObject.registerClass(
 class AdvancedPage extends Adw.PreferencesPage {
-    _init(settings) {
-        super._init({
+    constructor(settings: Gio.Settings) {
+        super({
             title: "Advanced",
             icon_name: 'preferences-other-symbolic',
             name: "Advanced",
@@ -72,7 +72,7 @@ class AdvancedPage extends Adw.PreferencesPage {
     }
 });
 
-function buildTileAppearanceWidget(settings) {
+function buildTileAppearanceWidget(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -107,7 +107,7 @@ function buildTileAppearanceWidget(settings) {
     return grid;
 }
 
-function buildGridSizeWidget(settings) {
+function buildGridSizeWidget(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -130,7 +130,7 @@ function buildGridSizeWidget(settings) {
     return grid;
 }
 
-function buildBehaviorWidget(settings) {
+function buildBehaviorWidget(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -147,7 +147,7 @@ function buildBehaviorWidget(settings) {
     return grid;
 }
 
-function buildCheckWidget(settings, id, label) {
+function buildCheckWidget(settings: Gio.Settings, id: string, label: string): Gtk.CheckButton {
     const check = new Gtk.CheckButton({
         label: label,
         visible: true
@@ -156,9 +156,9 @@ function buildCheckWidget(settings, id, label) {
     return check;
 }
 
-function buildColorWidget(settings, id) {
+function buildColorWidget(settings: Gio.Settings, id: string): Gtk.ColorButton {
     const rgba = new Gdk.RGBA();
-    rgba.parse(settings.get_string(id));
+    rgba.parse(settings.get_string(id)!);
 
     const color = new Gtk.ColorButton({
         rgba: rgba,
@@ -168,7 +168,7 @@ function buildColorWidget(settings, id) {
     });
 
     color.connect('color-set', function () {
-        settings.set_string(id, color.get_rgba().to_string());
+        settings.set_string(id, color.get_rgba().to_string()!);
     });
 
     return color;

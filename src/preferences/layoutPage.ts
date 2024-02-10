@@ -1,13 +1,17 @@
 import GObject from 'gi://GObject';
+import Gio from "gi://Gio";
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 
 import { buildNumberWidget } from './common.js';
 
+type Layout = { cols: number[], rows: number[] };
+type Area = { x: number, y: number, width: number, height: number };
+
 export const LayoutPage = GObject.registerClass(
 class LayoutPage extends Adw.PreferencesPage {
-    _init(settings, n) {
-        super._init({
+    constructor(settings: Gio.Settings, n: number) {
+        super({
             title: `Layout ${n}`,
             icon_name: 'preferences-desktop-display-symbolic',
             name: `LayoutPage${n}`,
@@ -34,7 +38,7 @@ class LayoutPage extends Adw.PreferencesPage {
 
         // Recreate WeightsWidget when grid size changes
         function recreateWeightsWidget() {
-            grid.remove(grid.get_child_at(0, 1));
+            grid.remove(grid.get_child_at(0, 1)!);
             grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
         }
         settings.connect('changed::grid-cols', recreateWeightsWidget);
@@ -52,7 +56,7 @@ class LayoutPage extends Adw.PreferencesPage {
     }
 });
 
-function buildWeightsWidget(settings, n) {
+function buildWeightsWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     const num_cols = settings.get_int('grid-cols');
     const num_rows = settings.get_int('grid-rows');
 
@@ -84,21 +88,21 @@ function buildWeightsWidget(settings, n) {
     return grid;
 }
 
-function buildPreviewWidget(settings, n) {
+function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     const grid = new Gtk.Grid({
         column_homogeneous: true,
         row_homogeneous: true,
         visible: true
     });
 
-    let tiles = [];
+    let tiles: Gtk.Label[] = [];
 
-    function discardTiles() {
+    function discardTiles(): void {
         tiles.forEach(tile => grid.remove(tile));
         tiles = [];
     }
 
-    function createTiles() {
+    function createTiles(): void {
         const layout = loadLayout(settings, n);
 
         layout.cols.forEach((col_weight, col) => {
@@ -145,7 +149,7 @@ function buildPreviewWidget(settings, n) {
     return grid;
 }
 
-function layoutPrefix(n) {
+function layoutPrefix(n: number): string {
     // For legacy reasons, layout 1 does not have a prefix
     if (n === 1) {
         return "";
@@ -153,11 +157,11 @@ function layoutPrefix(n) {
     return `layout-${n}-`;
 }
 
-function loadLayout(settings, n) {
+function loadLayout(settings: Gio.Settings, n: number): Layout {
     const num_cols = settings.get_int('grid-cols');
     const num_rows = settings.get_int('grid-rows');
 
-    const cols = [], rows = [];
+    const cols: number[] = [], rows: number[] = [];
     const prefix = layoutPrefix(n);
 
     for (let col = 0; col < num_cols; col++) {
@@ -170,7 +174,7 @@ function loadLayout(settings, n) {
     return {cols: cols, rows: rows};
 }
 
-function calculateArea(layout, col, row) {
+function calculateArea(layout: Layout, col: number, row: number): Area {
     const colStart = sumUntil(layout.cols, col);
     const rowStart = sumUntil(layout.rows, row);
     const colEnd = sumUntil(layout.cols, col + 1);
@@ -178,6 +182,6 @@ function calculateArea(layout, col, row) {
     return {x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart};
 }
 
-function sumUntil(list, index) {
+function sumUntil(list: number[], index: number): number {
     return list.reduce((prev, curr, i) => i < index ? prev + curr : prev, 0);
 }
