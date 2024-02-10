@@ -52,16 +52,19 @@ const Tile = GObject.registerClass(
 );
 
 export default class TactileExtension extends Extension {
-    private _tiles: TileDef[] = [];
-    private _window: Meta.Window | null = null;
-    private _monitor: number | null = null;
-    private _tile: TileDef | null = null;
-    private _date: number | null = null;
-    private _sourceIds: number[] = [];
-    private _settings: Gio.Settings | null = null;
+    _tiles?: TileDef[];
+    _window?: Meta.Window;
+    _monitor?: number;
+    _tile?: TileDef;
+    _date?: number;
+    _sourceIds?: number[];
+    _settings?: Gio.Settings;
 
     enable(): void {
+        this._tiles = [];
+        this._sourceIds = [];
         this._settings = this.getSettings();
+
         this.bindKey("show-tiles", () => this.onShowTiles());
         this.bindKey("show-settings", () => this.openPreferences());
     }
@@ -75,20 +78,22 @@ export default class TactileExtension extends Extension {
 
         this.unbindKey("show-tiles");
         this.unbindKey("show-settings");
-        this._settings = null;
+
+        this._settings = undefined;
+        this._sourceIds = undefined;
+        this._tiles = undefined;
     }
 
     removeSources(): void {
-        this._sourceIds.forEach((sourceId) => GLib.Source.remove(sourceId));
-        this._sourceIds = [];
+        this._sourceIds!.forEach((sourceId) => GLib.Source.remove(sourceId));
     }
 
     addSourceToList(sourceId: number): void {
-        this._sourceIds.push(sourceId);
+        this._sourceIds!.push(sourceId);
     }
 
     removeSourceFromList(sourceId: number): void {
-        this._sourceIds = this._sourceIds.filter((id) => id !== sourceId);
+        this._sourceIds = this._sourceIds!.filter((id) => id !== sourceId);
     }
 
     bindKey(key: string, callback: Meta.KeyHandlerFunc): void {
@@ -106,15 +111,15 @@ export default class TactileExtension extends Extension {
     }
 
     onShowTiles(): void {
-        if (this._tiles.length > 0) {
+        if (this._tiles!.length > 0) {
             this.discardTiles();
         } else {
-            this.displayTiles(null, null);
+            this.displayTiles();
         }
     }
 
     onHideTiles(): void {
-        if (this._tiles.length > 0) {
+        if (this._tiles!.length > 0) {
             this.discardTiles();
         }
     }
@@ -124,7 +129,7 @@ export default class TactileExtension extends Extension {
         const lastDate = this._date;
 
         // Assume this is the first tile if more than one second of inactivity
-        if (lastDate == null || lastDate + 1000 < Date.now()) {
+        if (!lastDate || lastDate + 1000 < Date.now()) {
             this._tile = tile;
             this._date = Date.now();
             return;
@@ -133,23 +138,23 @@ export default class TactileExtension extends Extension {
         this.moveWindow(this._window!, this.combineAreas(lastTile!.area, tile.area));
         this.discardTiles();
 
-        this._tile = null;
-        this._date = null;
+        this._tile = undefined;
+        this._date = undefined;
     }
 
     onNextMonitor(): void {
-        if (this._monitor != null) {
+        if (this._monitor != undefined) {
             const nextMonitor = (this._monitor + 1) % this.getNumMonitors();
             this.discardTiles();
-            this.displayTiles(nextMonitor, null);
+            this.displayTiles(nextMonitor);
         }
     }
 
     onPrevMonitor(): void {
-        if (this._monitor != null) {
+        if (this._monitor != undefined) {
             const prevMonitor = (this._monitor - 1 + this.getNumMonitors()) % this.getNumMonitors();
             this.discardTiles();
-            this.displayTiles(prevMonitor, null);
+            this.displayTiles(prevMonitor);
         }
     }
 
@@ -165,16 +170,16 @@ export default class TactileExtension extends Extension {
         this.displayTiles(monitor, window);
     }
 
-    displayTiles(monitor: number | null, window: Meta.Window | null): void {
+    displayTiles(monitor?: number, window?: Meta.Window): void {
         this.debug("Display tiles (begin)");
 
         // Find active window
-        const activeWindow = window != null ? window : this.getActiveWindow();
+        const activeWindow = window ?? this.getActiveWindow();
         if (!activeWindow) {
             this.debug("No active window");
             return;
         }
-        const activeMonitor = monitor != null ? monitor : activeWindow.get_monitor();
+        const activeMonitor = monitor ?? activeWindow.get_monitor();
 
         // Create tiles
         const workarea = this.getWorkAreaForMonitor(activeMonitor);
@@ -222,7 +227,7 @@ export default class TactileExtension extends Extension {
         this.unbindKey("hide-tiles");
 
         // Discard and unbind keys
-        this._tiles.forEach((tile) => {
+        this._tiles!.forEach((tile) => {
             this.unbindKey(tile.id);
             Main.uiGroup.remove_actor(tile.actor);
             tile.actor.destroy();
@@ -230,8 +235,8 @@ export default class TactileExtension extends Extension {
 
         // Clear tiles and active window
         this._tiles = [];
-        this._monitor = null;
-        this._window = null;
+        this._monitor = undefined;
+        this._window = undefined;
 
         this.debug("Discard tiles (finish)");
     }
@@ -256,8 +261,8 @@ export default class TactileExtension extends Extension {
         const num_cols = settings.get_int("grid-cols");
         const num_rows = settings.get_int("grid-rows");
 
-        const cols = [];
-        const rows = [];
+        const cols: number[] = [];
+        const rows: number[] = [];
 
         const prefix = this.layoutPrefix(n);
 
@@ -454,13 +459,11 @@ export default class TactileExtension extends Extension {
         return global.workspace_manager.get_active_workspace().get_work_area_for_monitor(monitor);
     }
 
-    getActiveWindow(): Meta.Window | null {
-        return (
-            global.workspace_manager
-                .get_active_workspace()
-                .list_windows()
-                .find((window) => window.has_focus()) ?? null
-        );
+    getActiveWindow(): Meta.Window | undefined {
+        return global.workspace_manager
+            .get_active_workspace()
+            .list_windows()
+            .find((window) => window.has_focus());
     }
 
     sumUntil(list: number[], index: number): number {

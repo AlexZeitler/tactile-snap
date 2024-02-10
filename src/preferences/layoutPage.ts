@@ -166,8 +166,9 @@ function loadLayout(settings: Gio.Settings, n: number): Layout {
     const num_cols = settings.get_int("grid-cols");
     const num_rows = settings.get_int("grid-rows");
 
-    const cols: number[] = [],
-        rows: number[] = [];
+    const cols: number[] = [];
+    const rows: number[] = [];
+
     const prefix = layoutPrefix(n);
 
     for (let col = 0; col < num_cols; col++) {

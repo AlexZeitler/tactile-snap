@@ -1,5 +1,6 @@
 {
   "name": "tactile",
+  "type": "module",
   "devDependencies": {
     "@girs/adw-1": "1.4.2-3.2.7",
     "@girs/gdk-4.0": "4.0.0-3.2.7",
