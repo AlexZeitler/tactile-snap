@@ -1,0 +1,7 @@
+Build:
+  stage: build
+  image: node:21
+  script:
+    - npm ci
+    - npm run check
+    - npm run build
