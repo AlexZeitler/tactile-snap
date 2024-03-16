@@ -198,7 +198,7 @@ export default class TactileExtension extends Extension {
 
         // Display and bind keys
         this._tiles.forEach((tile) => {
-            Main.uiGroup.add_actor(tile.actor);
+            Main.layoutManager.uiGroup.add_child(tile.actor);
             this.bindKey(tile.id, () => this.onActivateTile(tile));
         });
 
@@ -229,7 +229,7 @@ export default class TactileExtension extends Extension {
         // Discard and unbind keys
         this._tiles!.forEach((tile) => {
             this.unbindKey(tile.id);
-            Main.uiGroup.remove_actor(tile.actor);
+            Main.layoutManager.uiGroup.remove_child(tile.actor);
             tile.actor.destroy();
         });
 

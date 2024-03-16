@@ -5,5 +5,5 @@
   "url": "https://gitlab.com/lundal/tactile",
   "settings-schema": "org.gnome.shell.extensions.tactile",
   "version": 30,
-  "shell-version": ["45"]
+  "shell-version": ["45", "46"]
 }
