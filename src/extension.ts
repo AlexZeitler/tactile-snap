@@ -179,15 +179,19 @@ export default class TactileExtension extends Extension {
             this.debug("No active window");
             return;
         }
+        this.debug("Active window: " + activeWindow.get_title());
         const activeMonitor = monitor ?? activeWindow.get_monitor();
+        this.debug("Active monitor: " + activeMonitor);
 
         // Create tiles
         const workarea = this.getWorkAreaForMonitor(activeMonitor);
+        this.debug("Workarea: " + this.stringifyArea(workarea));
         const layoutNumber = this.loadMonitorLayout(this._settings!, activeMonitor);
+        this.debug("Layout: " + layoutNumber);
         const layout = this.loadLayout(this._settings!, layoutNumber);
         const tiles = this.createTiles(workarea, layout);
         if (tiles.length < 1) {
-            this.debug("No tiles");
+            this.debug("No tiles in layout");
             return;
         }
 
