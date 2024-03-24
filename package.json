@@ -16,6 +16,6 @@
     "clean": "rm -rf build",
     "format": "prettier --write src",
     "check": "prettier --check src && glib-compile-schemas --strict --dry-run src/schemas",
-    "build": "tsc --outDir build && cp src/metadata.json src/*.css src/schemas/*.xml build"
+    "build": "tsc --outDir build && cp -r src/metadata.json src/*.css src/schemas build"
   }
 }
