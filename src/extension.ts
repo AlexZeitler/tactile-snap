@@ -305,27 +305,25 @@ export default class TactileExtension extends Extension {
         // also be a bit glitchy on Wayland. We therefore make extra attempts,
         // alternating between move_frame() and move_resize_frame().
 
-        let attempts = 0;
+        let attempts = 1;
         const sourceId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
             const windowArea = Area.fromRectangle(window.get_frame_rect());
             this.debug(`Window area: ${windowArea.stringify()} (attempt ${attempts})`);
 
-            if (windowArea.isEqual(area)) {
+            if (attempts >= 5) {
                 this.removeSourceFromList(sourceId);
                 return GLib.SOURCE_REMOVE;
             }
 
-            if (attempts % 2 === 0) {
-                window.move_frame(true, area.x, area.y);
-            } else {
-                window.move_resize_frame(true, area.x, area.y, area.width, area.height);
+            if (!windowArea.isEqual(area)) {
+                if (attempts % 2 === 1) {
+                    window.move_frame(true, area.x, area.y);
+                } else {
+                    window.move_resize_frame(true, area.x, area.y, area.width, area.height);
+                }
             }
 
-            if (attempts++ >= 5) {
-                this.removeSourceFromList(sourceId);
-                return GLib.SOURCE_REMOVE;
-            }
-
+            attempts += 1;
             return GLib.SOURCE_CONTINUE;
         });
         this.addSourceToList(sourceId);
