@@ -3,10 +3,11 @@ import Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 import Adw from "gi://Adw";
 
-import { buildNumberWidget } from "./common.js";
-import { Area } from "../common/area.js";
-import { Layout } from "../common/layout.js";
-import { sumAll } from "../common/arrays.js";
+import { Area } from "../../common/area.js";
+import { Layout } from "../../common/layout.js";
+import { sumAll } from "../../common/arrays.js";
+
+import { createNumberInput } from "../inputs/number.js";
 
 export const LayoutPage = GObject.registerClass(
     class LayoutPage extends Adw.PreferencesPage {
@@ -34,15 +35,15 @@ export const LayoutPage = GObject.registerClass(
                 visible: true,
             });
             grid.attach(weightsLabel, 0, 0, 1, 1);
-            grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
+            grid.attach(createWeightsSection(settings, n), 0, 1, 1, 1);
 
-            // Recreate WeightsWidget when grid size changes
-            function recreateWeightsWidget() {
+            // Recreate WeightsSection when grid size changes
+            function recreateWeightsSection() {
                 grid.remove(grid.get_child_at(0, 1)!);
-                grid.attach(buildWeightsWidget(settings, n), 0, 1, 1, 1);
+                grid.attach(createWeightsSection(settings, n), 0, 1, 1, 1);
             }
-            settings.connect("changed::grid-cols", recreateWeightsWidget);
-            settings.connect("changed::grid-rows", recreateWeightsWidget);
+            settings.connect("changed::grid-cols", recreateWeightsSection);
+            settings.connect("changed::grid-rows", recreateWeightsSection);
 
             const weightsFootnote = new Gtk.Label({
                 label: "Tip: Set weight to 0 to remove any column/row from this layout",
@@ -61,7 +62,7 @@ export const LayoutPage = GObject.registerClass(
     },
 );
 
-function buildWeightsWidget(settings: Gio.Settings, n: number): Gtk.Grid {
+function createWeightsSection(settings: Gio.Settings, n: number): Gtk.Grid {
     const num_cols = settings.get_int("grid-cols");
     const num_rows = settings.get_int("grid-rows");
 
@@ -76,24 +77,24 @@ function buildWeightsWidget(settings: Gio.Settings, n: number): Gtk.Grid {
 
     // Column weights
     for (let col = 0; col < num_cols; col++) {
-        const widget = buildNumberWidget(settings, `${prefix}col-${col}`);
-        grid.attach(widget, col + 1, 0, 1, 1);
+        const input = createNumberInput(settings, `${prefix}col-${col}`);
+        grid.attach(input, col + 1, 0, 1, 1);
     }
 
     // Row weights
     for (let row = 0; row < num_rows; row++) {
-        const widget = buildNumberWidget(settings, `${prefix}row-${row}`);
-        grid.attach(widget, 0, row + 1, 1, 1);
+        const input = createNumberInput(settings, `${prefix}row-${row}`);
+        grid.attach(input, 0, row + 1, 1, 1);
     }
 
     // Preview
-    const preview = buildPreviewWidget(settings, n);
+    const preview = createPreviewWidget(settings, n);
     grid.attach(preview, 1, 1, num_cols, num_rows);
 
     return grid;
 }
 
-function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
+function createPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     const grid = new Gtk.Grid({
         column_homogeneous: true,
         row_homogeneous: true,

@@ -1,10 +1,11 @@
 import GObject from "gi://GObject";
-import Gdk from "gi://Gdk";
 import Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 import Adw from "gi://Adw";
 
-import { buildNumberWidget } from "./common.js";
+import { createCheckboxInput } from "../inputs/checkbox.js";
+import { createColorInput } from "../inputs/color.js";
+import { createNumberInput } from "../inputs/number.js";
 
 const TILE_COLORS = [
     { id: "text-color", desc: "Text color" },
@@ -49,7 +50,7 @@ export const AdvancedPage = GObject.registerClass(
                 visible: true,
             });
             grid.attach(tilesLabel, 0, 0, 1, 1);
-            grid.attach(buildTileAppearanceWidget(settings), 0, 1, 1, 1);
+            grid.attach(createTileAppearanceSection(settings), 0, 1, 1, 1);
 
             const gridLabel = new Gtk.Label({
                 label: "<b>Grid size</b>",
@@ -57,7 +58,7 @@ export const AdvancedPage = GObject.registerClass(
                 visible: true,
             });
             grid.attach(gridLabel, 0, 2, 1, 1);
-            grid.attach(buildGridSizeWidget(settings), 0, 3, 1, 1);
+            grid.attach(createGridSizeSection(settings), 0, 3, 1, 1);
 
             const behaviorLabel = new Gtk.Label({
                 label: "<b>Behavior</b>",
@@ -65,7 +66,7 @@ export const AdvancedPage = GObject.registerClass(
                 visible: true,
             });
             grid.attach(behaviorLabel, 0, 4, 1, 1);
-            grid.attach(buildBehaviorWidget(settings), 0, 5, 1, 1);
+            grid.attach(createBehaviorSection(settings), 0, 5, 1, 1);
 
             const group = new Adw.PreferencesGroup();
             group.add(grid);
@@ -78,7 +79,7 @@ export const AdvancedPage = GObject.registerClass(
     },
 );
 
-function buildTileAppearanceWidget(settings: Gio.Settings): Gtk.Grid {
+function createTileAppearanceSection(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -94,8 +95,8 @@ function buildTileAppearanceWidget(settings: Gio.Settings): Gtk.Grid {
         });
         grid.attach(label, 0, index, 1, 1);
 
-        const widget = buildColorWidget(settings, color.id);
-        grid.attach(widget, 1, index, 1, 1);
+        const input = createColorInput(settings, color.id);
+        grid.attach(input, 1, index, 1, 1);
     });
 
     TILE_SIZES.forEach((size, index) => {
@@ -106,14 +107,14 @@ function buildTileAppearanceWidget(settings: Gio.Settings): Gtk.Grid {
         });
         grid.attach(label, 2, index, 1, 1);
 
-        const widget = buildNumberWidget(settings, size.id);
-        grid.attach(widget, 3, index, 1, 1);
+        const input = createNumberInput(settings, size.id);
+        grid.attach(input, 3, index, 1, 1);
     });
 
     return grid;
 }
 
-function buildGridSizeWidget(settings: Gio.Settings): Gtk.Grid {
+function createGridSizeSection(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -129,14 +130,14 @@ function buildGridSizeWidget(settings: Gio.Settings): Gtk.Grid {
         });
         grid.attach(label, 0, index, 1, 1);
 
-        const widget = buildNumberWidget(settings, size.id, size.min, size.max);
-        grid.attach(widget, 1, index, 1, 1);
+        const input = createNumberInput(settings, size.id, size.min, size.max);
+        grid.attach(input, 1, index, 1, 1);
     });
 
     return grid;
 }
 
-function buildBehaviorWidget(settings: Gio.Settings): Gtk.Grid {
+function createBehaviorSection(settings: Gio.Settings): Gtk.Grid {
     const grid = new Gtk.Grid({
         halign: Gtk.Align.CENTER,
         column_spacing: 12,
@@ -144,38 +145,11 @@ function buildBehaviorWidget(settings: Gio.Settings): Gtk.Grid {
         visible: true,
     });
 
-    const maximizeWidget = buildCheckWidget(settings, "maximize", "Maximize window when possible");
-    grid.attach(maximizeWidget, 0, 0, 1, 1);
+    const maximizeInput = createCheckboxInput(settings, "maximize", "Maximize window when possible");
+    grid.attach(maximizeInput, 0, 0, 1, 1);
 
-    const debugWidget = buildCheckWidget(settings, "debug", "Log debug information to journal");
-    grid.attach(debugWidget, 0, 1, 1, 1);
+    const debugInput = createCheckboxInput(settings, "debug", "Log debug information to journal");
+    grid.attach(debugInput, 0, 1, 1, 1);
 
     return grid;
-}
-
-function buildCheckWidget(settings: Gio.Settings, id: string, label: string): Gtk.CheckButton {
-    const check = new Gtk.CheckButton({
-        label: label,
-        visible: true,
-    });
-    settings.bind(id, check, "active", Gio.SettingsBindFlags.DEFAULT);
-    return check;
-}
-
-function buildColorWidget(settings: Gio.Settings, id: string): Gtk.ColorButton {
-    const rgba = new Gdk.RGBA();
-    rgba.parse(settings.get_string(id)!);
-
-    const color = new Gtk.ColorButton({
-        rgba: rgba,
-        show_editor: true,
-        use_alpha: true,
-        visible: true,
-    });
-
-    color.connect("color-set", function () {
-        settings.set_string(id, color.get_rgba().to_string()!);
-    });
-
-    return color;
 }

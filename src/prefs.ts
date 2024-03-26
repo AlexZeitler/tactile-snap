@@ -4,9 +4,9 @@ import Gdk from "gi://Gdk";
 import Gtk from "gi://Gtk";
 import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
 
-import { LayoutPage } from "./preferences/layoutPage.js";
-import { AdvancedPage } from "./preferences/advancedPage.js";
-import { KeyboardShortcutsPage } from "./preferences/keyboardShortcutsPage.js";
+import { LayoutPage } from "./preferences/pages/layout.js";
+import { AdvancedPage } from "./preferences/pages/advanced.js";
+import { KeyboardShortcutsPage } from "./preferences/pages/keyboardShortcuts.js";
 
 export default class TactilePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window: Adw.PreferencesWindow) {

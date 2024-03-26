@@ -1,7 +1,7 @@
 import Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 
-export function buildNumberWidget(
+export function createNumberInput(
     settings: Gio.Settings,
     id: string,
     min: number = 0,
