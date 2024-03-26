@@ -4,9 +4,9 @@ import Gtk from "gi://Gtk";
 import Adw from "gi://Adw";
 
 import { buildNumberWidget } from "./common.js";
-
-type Layout = { cols: number[]; rows: number[] };
-type Area = { x: number; y: number; width: number; height: number };
+import { Area } from "../common/area.js";
+import { Layout } from "../common/layout.js";
+import { sumAll } from "../common/arrays.js";
 
 export const LayoutPage = GObject.registerClass(
     class LayoutPage extends Adw.PreferencesPage {
@@ -72,7 +72,7 @@ function buildWeightsWidget(settings: Gio.Settings, n: number): Gtk.Grid {
         visible: true,
     });
 
-    const prefix = layoutPrefix(n);
+    const prefix = Layout.prefix(n);
 
     // Column weights
     for (let col = 0; col < num_cols; col++) {
@@ -108,7 +108,8 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     }
 
     function createTiles(): void {
-        const layout = loadLayout(settings, n);
+        const layout = Layout.fromSettings(settings, n);
+        const tablearea = new Area(0, 0, sumAll(layout.cols), sumAll(layout.rows));
 
         layout.cols.forEach((col_weight, col) => {
             layout.rows.forEach((row_weight, row) => {
@@ -117,7 +118,7 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
                 }
                 const id = `tile-${col}-${row}`;
                 const name = settings.get_strv(id)[0] || "";
-                const area = calculateArea(layout, col, row);
+                const area = tablearea.subareaIgnoreGaps(layout, col, row);
 
                 const tile = new Gtk.Label({
                     halign: Gtk.Align.FILL,
@@ -152,43 +153,4 @@ function buildPreviewWidget(settings: Gio.Settings, n: number): Gtk.Grid {
     });
 
     return grid;
-}
-
-function layoutPrefix(n: number): string {
-    // For legacy reasons, layout 1 does not have a prefix
-    if (n === 1) {
-        return "";
-    }
-    return `layout-${n}-`;
-}
-
-function loadLayout(settings: Gio.Settings, n: number): Layout {
-    const num_cols = settings.get_int("grid-cols");
-    const num_rows = settings.get_int("grid-rows");
-
-    const cols: number[] = [];
-    const rows: number[] = [];
-
-    const prefix = layoutPrefix(n);
-
-    for (let col = 0; col < num_cols; col++) {
-        cols.push(settings.get_int(`${prefix}col-${col}`));
-    }
-    for (let row = 0; row < num_rows; row++) {
-        rows.push(settings.get_int(`${prefix}row-${row}`));
-    }
-
-    return { cols: cols, rows: rows };
-}
-
-function calculateArea(layout: Layout, col: number, row: number): Area {
-    const colStart = sumUntil(layout.cols, col);
-    const rowStart = sumUntil(layout.rows, row);
-    const colEnd = sumUntil(layout.cols, col + 1);
-    const rowEnd = sumUntil(layout.rows, row + 1);
-    return { x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart };
-}
-
-function sumUntil(list: number[], index: number): number {
-    return list.reduce((prev, curr, i) => (i < index ? prev + curr : prev), 0);
 }

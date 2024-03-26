@@ -2,22 +2,16 @@ import Clutter from "gi://Clutter";
 import GLib from "gi://GLib";
 import GObject from "gi://GObject";
 import Gio from "gi://Gio";
-import Mtk from "gi://Mtk";
 import Meta from "gi://Meta";
 import Shell from "gi://Shell";
 import St from "gi://St";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import { Extension } from "resource:///org/gnome/shell/extensions/extension.js";
 
-type Layout = { cols: number[]; rows: number[]; gapsize: number };
-type Area = { x: number; y: number; width: number; height: number };
-type Styles = {
-    textColor: string;
-    borderColor: string;
-    backgroundColor: string;
-    textSize: number;
-    borderSize: number;
-};
+import { Area } from "./common/area.js";
+import { Layout } from "./common/layout.js";
+import { Styles } from "./common/styles.js";
+
 type TileDef = {
     id: string;
     area: Area;
@@ -135,7 +129,7 @@ export default class TactileExtension extends Extension {
             return;
         }
         // Once two tiles are activated, move the window
-        this.moveWindow(this._window!, this.combineAreas(lastTile!.area, tile.area));
+        this.moveWindow(this._window!, lastTile!.area.combineWith(tile.area));
         this.discardTiles();
 
         this._tile = undefined;
@@ -185,10 +179,10 @@ export default class TactileExtension extends Extension {
 
         // Create tiles
         const workarea = this.getWorkAreaForMonitor(activeMonitor);
-        this.debug("Workarea: " + this.stringifyArea(workarea));
+        this.debug("Workarea: " + workarea.stringify());
         const layoutNumber = this.loadMonitorLayout(this._settings!, activeMonitor);
         this.debug("Layout: " + layoutNumber);
-        const layout = this.loadLayout(this._settings!, layoutNumber);
+        const layout = Layout.fromSettings(this._settings!, layoutNumber);
         const tiles = this.createTiles(workarea, layout);
         if (tiles.length < 1) {
             this.debug("No tiles in layout");
@@ -245,14 +239,6 @@ export default class TactileExtension extends Extension {
         this.debug("Discard tiles (finish)");
     }
 
-    layoutPrefix(n: number): string {
-        // For legacy reasons, layout 1 does not have a prefix
-        if (n === 1) {
-            return "";
-        }
-        return `layout-${n}-`;
-    }
-
     saveMonitorLayout(settings: Gio.Settings, monitor: number, layout: number): void {
         settings.set_int(`monitor-${monitor}-layout`, layout);
     }
@@ -261,29 +247,8 @@ export default class TactileExtension extends Extension {
         return settings.get_int(`monitor-${monitor}-layout`);
     }
 
-    loadLayout(settings: Gio.Settings, n: number): Layout {
-        const num_cols = settings.get_int("grid-cols");
-        const num_rows = settings.get_int("grid-rows");
-
-        const cols: number[] = [];
-        const rows: number[] = [];
-
-        const prefix = this.layoutPrefix(n);
-
-        for (let col = 0; col < num_cols; col++) {
-            cols.push(settings.get_int(`${prefix}col-${col}`));
-        }
-        for (let row = 0; row < num_rows; row++) {
-            rows.push(settings.get_int(`${prefix}row-${row}`));
-        }
-
-        const gapsize = settings.get_int("gap-size");
-
-        return { cols: cols, rows: rows, gapsize: gapsize };
-    }
-
     createTiles(workarea: Area, layout: Layout): TileDef[] {
-        const styles = this.loadStyles(this._settings!);
+        const styles = Styles.fromSettings(this._settings!);
         const tiles: TileDef[] = [];
 
         layout.cols.forEach((col_weight, col) => {
@@ -293,7 +258,7 @@ export default class TactileExtension extends Extension {
                 }
                 const id = `tile-${col}-${row}`;
                 const name = this._settings!.get_strv(id)[0] || "";
-                const area = this.calculateAreaWithGaps(workarea, layout, col, row);
+                const area = workarea.subarea(layout, col, row);
                 const tile = { id: id, area: area, actor: new Tile(area, name, styles) };
                 tiles.push(tile);
             });
@@ -302,66 +267,13 @@ export default class TactileExtension extends Extension {
         return tiles;
     }
 
-    loadStyles(settings: Gio.Settings): Styles {
-        return {
-            textColor: settings.get_string("text-color")!,
-            borderColor: settings.get_string("border-color")!,
-            backgroundColor: settings.get_string("background-color")!,
-            textSize: settings.get_int("text-size"),
-            borderSize: settings.get_int("border-size"),
-        };
-    }
-
-    calculateAreaWithGaps(workarea: Area, layout: Layout, col: number, row: number): Area {
-        const shrunkWorkarea = this.shrinkArea(workarea, layout.gapsize, layout.gapsize, 0, 0);
-        const area = this.calculateArea(shrunkWorkarea, layout, col, row);
-        return this.shrinkArea(area, 0, 0, layout.gapsize, layout.gapsize);
-    }
-
-    calculateArea(workarea: Area, layout: Layout, col: number, row: number): Area {
-        const colStart = Math.floor(
-            workarea.x + (workarea.width * this.sumUntil(layout.cols, col)) / this.sumAll(layout.cols),
-        );
-        const rowStart = Math.floor(
-            workarea.y + (workarea.height * this.sumUntil(layout.rows, row)) / this.sumAll(layout.rows),
-        );
-        const colEnd = Math.floor(
-            workarea.x + (workarea.width * this.sumUntil(layout.cols, col + 1)) / this.sumAll(layout.cols),
-        );
-        const rowEnd = Math.floor(
-            workarea.y + (workarea.height * this.sumUntil(layout.rows, row + 1)) / this.sumAll(layout.rows),
-        );
-        return { x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart };
-    }
-
-    combineAreas(area1: Area, area2: Area): Area {
-        const colStart = Math.min(area1.x, area2.x);
-        const rowStart = Math.min(area1.y, area2.y);
-        const colEnd = Math.max(area1.x + area1.width, area2.x + area2.width);
-        const rowEnd = Math.max(area1.y + area1.height, area2.y + area2.height);
-        return { x: colStart, y: rowStart, width: colEnd - colStart, height: rowEnd - rowStart };
-    }
-
-    shrinkArea(area: Area, top: number, right: number, bottom: number, left: number): Area {
-        return {
-            x: area.x + left,
-            y: area.y + top,
-            width: area.width - left - right,
-            height: area.height - top - bottom,
-        };
-    }
-
-    stringifyArea(area: Area): string {
-        return `{ x: ${area.x}, y: ${area.y}, width: ${area.width}, height: ${area.height} }`;
-    }
-
     moveWindow(window: Meta.Window, area: Area) {
         if (!window) {
             return;
         }
 
-        this.debug("Target area: " + this.stringifyArea(area));
-        this.debug("Window area: " + this.stringifyArea(window.get_frame_rect()));
+        this.debug("Target area: " + area.stringify());
+        this.debug("Window area: " + Area.fromRectangle(window.get_frame_rect()).stringify());
 
         // GNOME has its own built-in tiling that is activated when pressing
         // Super+Left/Right. There does not appear to be any way to detect this
@@ -395,15 +307,10 @@ export default class TactileExtension extends Extension {
 
         let attempts = 0;
         const sourceId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
-            const frame = window.get_frame_rect();
-            this.debug(`Window area: ${this.stringifyArea(frame)} (attempt ${attempts})`);
+            const windowArea = Area.fromRectangle(window.get_frame_rect());
+            this.debug(`Window area: ${windowArea.stringify()} (attempt ${attempts})`);
 
-            if (
-                frame.x === area.x &&
-                frame.y === area.y &&
-                frame.width === area.width &&
-                frame.height === area.height
-            ) {
+            if (windowArea.isEqual(area)) {
                 this.removeSourceFromList(sourceId);
                 return GLib.SOURCE_REMOVE;
             }
@@ -428,7 +335,7 @@ export default class TactileExtension extends Extension {
         const monitors = this.getNumMonitors();
         for (let i = 0; i < monitors; i++) {
             const workarea = this.getWorkAreaForMonitor(i);
-            if (this.isWithinWorkArea(area, workarea) && area.x === workarea.x && area.width === workarea.width) {
+            if (area.isWithin(workarea) && area.isEqualHorizontally(workarea)) {
                 return true;
             }
         }
@@ -439,28 +346,20 @@ export default class TactileExtension extends Extension {
         const monitors = this.getNumMonitors();
         for (let i = 0; i < monitors; i++) {
             const workarea = this.getWorkAreaForMonitor(i);
-            if (this.isWithinWorkArea(area, workarea) && area.y === workarea.y && area.height === workarea.height) {
+            if (area.isWithin(workarea) && area.isEqualVertically(workarea)) {
                 return true;
             }
         }
         return false;
     }
 
-    isWithinWorkArea(area: Area, workarea: Area): boolean {
-        return (
-            area.x >= workarea.x &&
-            area.y >= workarea.y &&
-            area.x + area.width <= workarea.x + workarea.width &&
-            area.y + area.height <= workarea.y + workarea.height
-        );
-    }
-
     getNumMonitors(): number {
         return global.workspace_manager.get_active_workspace().get_display().get_n_monitors();
     }
 
-    getWorkAreaForMonitor(monitor: number): Mtk.Rectangle {
-        return global.workspace_manager.get_active_workspace().get_work_area_for_monitor(monitor);
+    getWorkAreaForMonitor(monitor: number): Area {
+        const rect = global.workspace_manager.get_active_workspace().get_work_area_for_monitor(monitor);
+        return Area.fromRectangle(rect);
     }
 
     getActiveWindow(): Meta.Window | undefined {
@@ -468,14 +367,6 @@ export default class TactileExtension extends Extension {
             .get_active_workspace()
             .list_windows()
             .find((window) => window.has_focus());
-    }
-
-    sumUntil(list: number[], index: number): number {
-        return list.reduce((prev, curr, i) => (i < index ? prev + curr : prev), 0);
-    }
-
-    sumAll(list: number[]): number {
-        return list.reduce((prev, curr) => prev + curr, 0);
     }
 
     debug(message: string): void {
