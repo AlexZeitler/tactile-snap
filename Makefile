@@ -5,8 +5,8 @@ zip = tactile@lundal.io.zip
 build: $(zip)
 
 install: $(zip)
-	mkdir -p ~/.local/share/gnome-shell/extensions/tactile@lundal.io/
-	unzip -o $(zip) -d ~/.local/share/gnome-shell/extensions/tactile@lundal.io/
+	gnome-extensions uninstall tactile@lundal.io || rm -rf ~/.local/share/gnome-shell/extensions/tactile@lundal.io/
+	gnome-extensions install --force $(zip)
 
 clean:
 	npm run clean
