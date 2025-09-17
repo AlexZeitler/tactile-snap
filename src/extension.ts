@@ -120,23 +120,55 @@ export default class TactileExtension extends Extension {
         // Super+Left/Right. There does not appear to be any way to detect this
         // through the Meta APIs, so we always unmaximize to break the tiling.
 
-        if (window.get_maximized()) {
-            window.unmaximize(Meta.MaximizeFlags.BOTH);
-        }
+        // GNOME 49 has changed the maximize/unmaximize API. This uses feature
+        // detection to support both the new and the old API. Details in
+        // https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/4415
+        if ((window as any).get_maximize_flags) {
+            const window_GNOME49: {
+                get_maximize_flags(): Meta.MaximizeFlags;
+                set_maximize_flags(directions: Meta.MaximizeFlags): void;
+                set_unmaximize_flags(directions: Meta.MaximizeFlags): void;
+                move_resize_frame(user_op: boolean, root_x_nw: number, root_y_nw: number, w: number, h: number): void;
+            } = window as any;
 
-        window.move_resize_frame(true, area.x, area.y, area.width, area.height);
-
-        if (this._settings!.get_boolean("maximize")) {
-            if (isEntireWorkAreaWidth(area)) {
-                window.maximize(Meta.MaximizeFlags.HORIZONTAL);
-            } else {
-                window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+            if (window_GNOME49.get_maximize_flags()) {
+                window_GNOME49.set_unmaximize_flags(Meta.MaximizeFlags.BOTH);
             }
 
-            if (isEntireWorkAreaHeight(area)) {
-                window.maximize(Meta.MaximizeFlags.VERTICAL);
-            } else {
-                window.unmaximize(Meta.MaximizeFlags.VERTICAL);
+            window_GNOME49.move_resize_frame(true, area.x, area.y, area.width, area.height);
+
+            if (this._settings!.get_boolean("maximize")) {
+                if (isEntireWorkAreaWidth(area)) {
+                    window_GNOME49.set_maximize_flags(Meta.MaximizeFlags.HORIZONTAL);
+                } else {
+                    window_GNOME49.set_unmaximize_flags(Meta.MaximizeFlags.HORIZONTAL);
+                }
+
+                if (isEntireWorkAreaHeight(area)) {
+                    window_GNOME49.set_maximize_flags(Meta.MaximizeFlags.VERTICAL);
+                } else {
+                    window_GNOME49.set_unmaximize_flags(Meta.MaximizeFlags.VERTICAL);
+                }
+            }
+        } else {
+            if (window.get_maximized()) {
+                window.unmaximize(Meta.MaximizeFlags.BOTH);
+            }
+
+            window.move_resize_frame(true, area.x, area.y, area.width, area.height);
+
+            if (this._settings!.get_boolean("maximize")) {
+                if (isEntireWorkAreaWidth(area)) {
+                    window.maximize(Meta.MaximizeFlags.HORIZONTAL);
+                } else {
+                    window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+                }
+
+                if (isEntireWorkAreaHeight(area)) {
+                    window.maximize(Meta.MaximizeFlags.VERTICAL);
+                } else {
+                    window.unmaximize(Meta.MaximizeFlags.VERTICAL);
+                }
             }
         }
 
