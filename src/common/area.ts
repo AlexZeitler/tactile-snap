@@ -1,4 +1,4 @@
-import Mtk from "@girs/mtk-13";
+import type Mtk from "gi://Mtk";
 import { Layout } from "./layout.js";
 import { sumAll, sumUntil } from "./arrays.js";
 

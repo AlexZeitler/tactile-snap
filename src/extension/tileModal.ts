@@ -1,5 +1,5 @@
 import Clutter from "gi://Clutter";
-import Gio from "gi://Gio";
+import type Gio from "gi://Gio";
 import GObject from "gi://GObject";
 import Meta from "gi://Meta";
 import Shell from "gi://Shell";

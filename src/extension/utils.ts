@@ -1,4 +1,4 @@
-import Meta from "gi://Meta";
+import type Meta from "gi://Meta";
 
 import { Area } from "../common/area.js";
 

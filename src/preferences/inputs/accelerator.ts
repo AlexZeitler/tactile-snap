@@ -1,6 +1,6 @@
 import GObject from "gi://GObject";
-import Gdk from "gi://Gdk";
-import Gio from "gi://Gio";
+import type Gdk from "gi://Gdk";
+import type Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 
 const COLUMN_KEY = 0;

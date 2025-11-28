@@ -1,4 +1,4 @@
-import Gio from "gi://Gio";
+import type Gio from "gi://Gio";
 
 export class Layout {
     cols: number[];

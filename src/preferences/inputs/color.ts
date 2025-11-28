@@ -1,4 +1,4 @@
-import Gio from "gi://Gio";
+import type Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 import Gdk from "gi://Gdk";
 

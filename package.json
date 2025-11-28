@@ -3,12 +3,8 @@
   "type": "module",
   "devDependencies": {
     "@girs/gnome-shell": "47.0.2",
-    "@girs/mtk-13": "13.0.0-3.2.7",
-    "prettier": "3.2",
-    "typescript": "5.3"
-  },
-  "overrides": {
-    "@girs/gio-2.0": "^2.82.4-4.0.0-beta.20"
+    "prettier": "3.8.3",
+    "typescript": "5.9.3"
   },
   "scripts": {
     "clean": "rm -rf build",

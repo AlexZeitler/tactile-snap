@@ -1,5 +1,5 @@
-import Adw from "gi://Adw";
-import Gio from "gi://Gio";
+import type Adw from "gi://Adw";
+import type Gio from "gi://Gio";
 import Gdk from "gi://Gdk";
 import Gtk from "gi://Gtk";
 import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
@@ -9,7 +9,7 @@ import { AdvancedPage } from "./preferences/pages/advanced.js";
 import { KeyboardShortcutsPage } from "./preferences/pages/keyboardShortcuts.js";
 
 export default class TactilePreferences extends ExtensionPreferences {
-    async fillPreferencesWindow(window: Adw.PreferencesWindow) {
+    fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
         const settings: Gio.Settings = this.getSettings();
         const provider = new Gtk.CssProvider();
 
@@ -35,5 +35,8 @@ export default class TactilePreferences extends ExtensionPreferences {
 
         window.set_default_size(desired_width, desired_height);
         window.set_size_request(600, 400);
+
+        // GNOME 47+ expect a promise
+        return Promise.resolve();
     }
 }

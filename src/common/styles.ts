@@ -1,4 +1,4 @@
-import Gio from "gi://Gio";
+import type Gio from "gi://Gio";
 import St from "gi://St";
 import * as Config from "resource:///org/gnome/shell/misc/config.js";
 
