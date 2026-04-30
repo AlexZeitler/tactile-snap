@@ -9,7 +9,7 @@ import { AdvancedPage } from "./preferences/pages/advanced.js";
 import { KeyboardShortcutsPage } from "./preferences/pages/keyboardShortcuts.js";
 
 export default class TactilePreferences extends ExtensionPreferences {
-    fillPreferencesWindow(window: Adw.PreferencesWindow) {
+    async fillPreferencesWindow(window: Adw.PreferencesWindow) {
         const settings: Gio.Settings = this.getSettings();
         const provider = new Gtk.CssProvider();
 

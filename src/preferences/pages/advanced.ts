@@ -99,6 +99,9 @@ function createTileAppearanceSection(settings: Gio.Settings): Gtk.Grid {
         grid.attach(input, 1, index, 1, 1);
     });
 
+    const accentColorInput = createCheckboxInput(settings, "use-accent-color", "Use accent colors for tiles");
+    grid.attach(accentColorInput, 0, 4, 2, 1);
+
     TILE_SIZES.forEach((size, index) => {
         const label = new Gtk.Label({
             halign: Gtk.Align.END,

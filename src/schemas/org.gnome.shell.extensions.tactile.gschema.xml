@@ -413,6 +413,10 @@
             <summary>Background color</summary>
             <default>'rgba(128,128,255,0.1)'</default>
         </key>
+        <key name="use-accent-color" type="b">
+            <summary>Use accent color instead of custom color for tiles</summary>
+            <default>false</default>
+        </key>
         <key name="text-size" type="i">
             <summary>Text size</summary>
             <default>48</default>

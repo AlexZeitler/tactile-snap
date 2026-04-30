@@ -63,7 +63,7 @@ export function createAcceleratorInput(settings: Gio.Settings, id: string, allTr
     return treeView;
 }
 
-function parseAccelerator(settings: Gio.Settings, id: string): [number, Gdk.ModifierType] {
+function parseAccelerator(settings: Gio.Settings, id: string): [number, Gdk.ModifierType | null] {
     const accelerator = settings.get_strv(id)[0] || "";
     const [_, key, mods] = Gtk.accelerator_parse(accelerator);
     return [key, mods];
