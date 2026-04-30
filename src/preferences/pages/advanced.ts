@@ -2,6 +2,7 @@ import GObject from "gi://GObject";
 import type Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
 import Adw from "gi://Adw";
+import * as Config from "resource:///org/gnome/Shell/Extensions/js/misc/config.js";
 
 import { createCheckboxInput } from "../inputs/checkbox.js";
 import { createColorInput } from "../inputs/color.js";
@@ -99,9 +100,6 @@ function createTileAppearanceSection(settings: Gio.Settings): Gtk.Grid {
         grid.attach(input, 1, index, 1, 1);
     });
 
-    const accentColorInput = createCheckboxInput(settings, "use-accent-color", "Use accent colors for tiles");
-    grid.attach(accentColorInput, 0, 4, 2, 1);
-
     TILE_SIZES.forEach((size, index) => {
         const label = new Gtk.Label({
             halign: Gtk.Align.END,
@@ -113,6 +111,15 @@ function createTileAppearanceSection(settings: Gio.Settings): Gtk.Grid {
         const input = createNumberInput(settings, size.id);
         grid.attach(input, 3, index, 1, 1);
     });
+
+    if (getGnomeVersion() >= 47) {
+        const accentColorInput = createCheckboxInput(
+            settings,
+            "use-accent-color",
+            "Use system accent color instead of custom colors",
+        );
+        grid.attach(accentColorInput, 0, 4, 4, 1);
+    }
 
     return grid;
 }
@@ -155,4 +162,9 @@ function createBehaviorSection(settings: Gio.Settings): Gtk.Grid {
     grid.attach(debugInput, 0, 1, 1, 1);
 
     return grid;
+}
+
+function getGnomeVersion(): number {
+    const [major] = Config.PACKAGE_VERSION.split(".").map((s) => Number(s));
+    return major;
 }

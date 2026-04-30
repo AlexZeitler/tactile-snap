@@ -414,7 +414,7 @@
             <default>'rgba(128,128,255,0.1)'</default>
         </key>
         <key name="use-accent-color" type="b">
-            <summary>Use accent color instead of custom color for tiles</summary>
+            <summary>Use system accent color instead of custom colors</summary>
             <default>false</default>
         </key>
         <key name="text-size" type="i">
