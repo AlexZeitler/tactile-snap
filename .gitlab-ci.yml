@@ -7,6 +7,6 @@ Build:
   stage: build
   image: node:21
   script:
-    - npm ci
+    - npm ci --ignore-scripts
     - npm run check
     - npm run build

@@ -13,13 +13,16 @@ clean:
 	rm -f $(zip)
 
 $(zip): $(wildcard src/*)
-	npm ci
+	npm ci --ignore-scripts
 	npm run check
 	npm run build
 	(cd build && zip -r - *) > $@
 
 test-wayland:
-	dbus-run-session -- gnome-shell --nested --wayland
+	dbus-run-session gnome-shell --devkit --wayland
 
 follow-log:
 	journalctl -f /usr/bin/gnome-shell
+
+shexli: $(zip)
+	virtualenv .venv && source .venv/bin/activate && pip install --upgrade shexli && shexli $(zip)
