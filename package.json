@@ -2,9 +2,9 @@
   "name": "tactile",
   "type": "module",
   "devDependencies": {
-    "@girs/gnome-shell": "47.0.2",
-    "prettier": "3.8.3",
-    "typescript": "5.9.3"
+    "@girs/gnome-shell": "50.0.4",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3"
   },
   "scripts": {
     "clean": "rm -rf build",

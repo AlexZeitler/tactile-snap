@@ -11,8 +11,7 @@
     "target": "ES2021",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "rootDir": "src"
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
