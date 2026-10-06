@@ -6,6 +6,7 @@ import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/
 
 import { LayoutPage } from "./preferences/pages/layout.js";
 import { AdvancedPage } from "./preferences/pages/advanced.js";
+import { AutoSnapPage } from "./preferences/pages/autoSnap.js";
 import { KeyboardShortcutsPage } from "./preferences/pages/keyboardShortcuts.js";
 
 export default class TactilePreferences extends ExtensionPreferences {
@@ -25,6 +26,7 @@ export default class TactilePreferences extends ExtensionPreferences {
         window.add(new LayoutPage(settings, 2));
         window.add(new LayoutPage(settings, 3));
         window.add(new LayoutPage(settings, 4));
+        window.add(new AutoSnapPage(settings));
         window.add(new KeyboardShortcutsPage(settings));
         window.add(new AdvancedPage(settings));
 
