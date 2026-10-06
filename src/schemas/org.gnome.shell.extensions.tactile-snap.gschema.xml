@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <schemalist>
-    <schema id="org.gnome.shell.extensions.tactile" path="/org/gnome/shell/extensions/tactile/">
+    <schema id="org.gnome.shell.extensions.tactile-snap" path="/org/gnome/shell/extensions/tactile-snap/">
         <!-- Keyboard shortcuts -->
         <key name="show-tiles" type="as">
             <default><![CDATA[['<Super>t']]]></default>

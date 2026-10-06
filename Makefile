@@ -1,11 +1,11 @@
 .PHONY: build clean test-wayland follow-log
 
-zip = tactile@lundal.io.zip
+zip = tactile-snap@alexanderzeitler.com.zip
 
 build: $(zip)
 
 install: $(zip)
-	gnome-extensions uninstall tactile@lundal.io || rm -rf ~/.local/share/gnome-shell/extensions/tactile@lundal.io/
+	gnome-extensions uninstall tactile-snap@alexanderzeitler.com || rm -rf ~/.local/share/gnome-shell/extensions/tactile-snap@alexanderzeitler.com/
 	gnome-extensions install --force $(zip)
 
 clean:

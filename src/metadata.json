@@ -1,9 +1,9 @@
 {
-  "uuid": "tactile@lundal.io",
-  "name": "Tactile",
-  "description": "Tile windows on a custom grid using your keyboard. Type Super-T to show the grid, then type two tiles (or the same tile twice) to move the active window.\n\nThe grid can be up to 4x3 (corresponding to one hand on the keyboard) and each row/column can be weighted to take up more or less space.",
-  "url": "https://gitlab.com/lundal/tactile",
-  "settings-schema": "org.gnome.shell.extensions.tactile",
+  "uuid": "tactile-snap@alexanderzeitler.com",
+  "name": "Tactile Snap",
+  "description": "Tile windows on a custom grid using your keyboard. Type Super-T to show the grid, then type two tiles (or the same tile twice) to move the active window.\n\nThe grid can be up to 4x3 (corresponding to one hand on the keyboard) and each row/column can be weighted to take up more or less space.\n\nAuto-snap (optional): new windows snap to the first free grid slot, and windows moved to another workspace snap again there.\n\nFork of Tactile (https://gitlab.com/lundal/tactile).",
+  "url": "https://github.com/OWNER/tactile-snap",
+  "settings-schema": "org.gnome.shell.extensions.tactile-snap",
   "version": 38,
   "shell-version": ["45", "46", "47", "48", "49", "50", "51"]
 }
