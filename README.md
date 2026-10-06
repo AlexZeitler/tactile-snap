@@ -1,3 +1,62 @@
+# tactile-snap
+
+tactile-snap is a fork of [Tactile](https://gitlab.com/lundal/tactile) that adds auto-snap.
+It can be installed alongside the original.
+
+## Auto-snap
+
+1. New windows snap to the first free slot of the grid.
+2. If every slot is occupied, the window goes to the first slot.
+3. A window moved to another workspace snaps again there.
+   Example: a window on the right of workspace 1 is moved to the empty workspace 2 and snaps to the left.
+4. Slots are configurable and can span several cells, e.g. a 4x2 grid with the slots "left half" and "right half".
+   Without configuration, every visible cell is a slot.
+5. Auto-snap is off by default. Turn it on in Preferences → Auto-snap.
+
+Disable the original Tactile before enabling tactile-snap, because both use `Super+T`.
+
+### Configuring slots
+
+Configure auto-snap in Preferences → Auto-snap:
+
+- Choose the layout auto-snap uses (layout 1 by default).
+- Type the slots as pairs of tiles, in order of preference, and press Enter.
+  A pair spans a slot from the first tile to the second, as when typing tiles after `Super+T`.
+  Example for a 4x2 grid with the default tiles: `QS EF` gives a left and a right half.
+- Leave the field empty to use every visible cell as a slot.
+
+The preview shows the tiles of the chosen layout. The numbers show the order in which free slots are used.
+
+![Auto-snap preferences with a left and a right half in layout 2](examples/auto-snap-preferences.png)
+
+If a pair does not match two visible tiles of the chosen layout, the field turns red and nothing is saved.
+
+![Auto-snap preferences rejecting a tile that is hidden in layout 2](examples/auto-snap-invalid-slots.png)
+
+The settings can also be changed with `gsettings`. Slots are stored as a list of `(col, row, cols, rows)`:
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/tactile-snap@alexanderzeitler.com/schemas \
+  set org.gnome.shell.extensions.tactile-snap auto-snap-slots "[(0,0,2,2),(2,0,2,2)]"
+```
+
+The layout is stored in `auto-snap-layout` (1 to 4):
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/tactile-snap@alexanderzeitler.com/schemas \
+  set org.gnome.shell.extensions.tactile-snap auto-snap-layout 2
+```
+
+### Taking over existing Tactile settings
+
+```sh
+dconf dump /org/gnome/shell/extensions/tactile/ | dconf load /org/gnome/shell/extensions/tactile-snap/
+```
+
+### Known limitations
+
+- Apps that restore their own window geometry after the first frame (e.g. Firefox, Electron apps) can occasionally override the snap.
+
 # Tactile
 
 A window tiling extension for GNOME Shell.
