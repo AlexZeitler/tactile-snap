@@ -445,5 +445,20 @@
             <summary>Log debug information to journal</summary>
             <default>false</default>
         </key>
+        <!-- Auto-snap -->
+        <key name="auto-snap" type="b">
+            <default>false</default>
+            <summary>Snap new windows to the first free grid slot</summary>
+        </key>
+        <key name="auto-snap-slots" type="a(iiii)">
+            <default>[]</default>
+            <summary>Auto-snap slots as (col, row, cols, rows), in order of preference</summary>
+            <description>Empty list means every visible cell is a slot.</description>
+        </key>
+        <key name="auto-snap-layout" type="i">
+            <range min="1" max="4" />
+            <default>1</default>
+            <summary>Layout used by auto-snap</summary>
+        </key>
     </schema>
 </schemalist>

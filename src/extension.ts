@@ -8,12 +8,14 @@ import { Extension } from "resource:///org/gnome/shell/extensions/extension.js";
 
 import { Area } from "./common/area.js";
 import { TileModal } from "./extension/tileModal.js";
+import { AutoSnap } from "./extension/autoSnap.js";
 import { getActiveWindow, isEntireWorkAreaHeight, isEntireWorkAreaWidth } from "./extension/utils.js";
 
 export default class TactileExtension extends Extension {
     _modal?: St.Widget;
     _sourceIds?: number[];
     _settings?: Gio.Settings;
+    _autoSnap?: AutoSnap;
 
     enable(): void {
         this._sourceIds = [];
@@ -21,9 +23,19 @@ export default class TactileExtension extends Extension {
 
         this.bindKey("show-tiles", () => this.onShowTiles());
         this.bindKey("show-settings", () => this.openPreferences());
+
+        this._autoSnap = new AutoSnap(
+            this._settings,
+            (window, area) => this.moveWindow(window, area),
+            (message) => this.debug(message),
+        );
+        this._autoSnap.enable();
     }
 
     disable(): void {
+        this._autoSnap?.disable();
+        this._autoSnap = undefined;
+
         // In case the extension is disabled while sources are still active
         this.removeSources();
 
