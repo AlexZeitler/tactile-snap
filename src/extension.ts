@@ -190,12 +190,27 @@ export default class TactileExtension extends Extension {
         // also be a bit glitchy on Wayland. We therefore make extra attempts,
         // alternating between move_frame() and move_resize_frame().
 
+        // The window may be closed before the extra attempts are done, e.g. a
+        // short-lived window moved by auto-snap. Moving a window that is being
+        // unmanaged crashes GNOME Shell, so the attempts stop at that point.
+        let unmanaging = false;
+        const unmanagingId = window.connect("unmanaging", () => {
+            unmanaging = true;
+        });
+
         let attempts = 1;
         const sourceId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
+            if (unmanaging) {
+                this.debug("Window closed, stopping attempts");
+                this.removeSourceFromList(sourceId);
+                return GLib.SOURCE_REMOVE;
+            }
+
             const windowArea = Area.fromRectangle(window.get_frame_rect());
             this.debug(`Window area: ${windowArea.stringify()} (attempt ${attempts})`);
 
             if (attempts >= 5) {
+                window.disconnect(unmanagingId);
                 this.removeSourceFromList(sourceId);
                 return GLib.SOURCE_REMOVE;
             }
