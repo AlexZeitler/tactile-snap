@@ -58,6 +58,8 @@ Rules only apply while auto-snap is on.
 
 Click a rule to change it. Applications without a rule use the layout and slots above.
 
+![Auto-snap preferences with a rule that spans the whole grid of layout 2 for Google Chrome](examples/auto-snap-app-rules.png)
+
 Rules are stored in `auto-snap-app-rules` as a list of `(desktop file id, layout, slots)`:
 
 ```sh
