@@ -1,7 +1,9 @@
 import Gio from "gi://Gio";
 import Meta from "gi://Meta";
+import Shell from "gi://Shell";
 
 import { Area } from "../common/area.js";
+import { AppRule, loadAppRules } from "../common/appRules.js";
 import { Layout } from "../common/layout.js";
 import { Slot, effectiveSlots, isSlotVisible } from "../common/slots.js";
 import { getWorkAreaForMonitor } from "./utils.js";
@@ -16,6 +18,8 @@ type DebugFn = (message: string) => void;
  *
  * Slots come from the "auto-snap-slots" setting (list of (col, row, cols, rows),
  * in order of preference). If that list is empty, every visible cell is a slot.
+ * A rule in "auto-snap-app-rules" replaces layout and slots for the windows of
+ * one application.
  */
 export class AutoSnap {
     private _settings: Gio.Settings;
@@ -129,9 +133,14 @@ export class AutoSnap {
         this.snapToGrid(window);
     }
 
-    private getSlots(layout: Layout): Slot[] {
-        const configured = this._settings.get_value("auto-snap-slots").deepUnpack() as Slot[];
+    private getAppRule(window: Meta.Window): AppRule | undefined {
+        const app = Shell.WindowTracker.get_default().get_window_app(window)?.get_id();
+        const rule = loadAppRules(this._settings).find((r) => r.app === app);
+        this._debug(`AutoSnap: app ${app}${rule ? " has a rule" : ""}`);
+        return rule;
+    }
 
+    private getSlots(layout: Layout, configured: Slot[]): Slot[] {
         if (configured.some((slot) => !isSlotVisible(layout, slot))) {
             this._debug("AutoSnap: ignored slots outside the grid or in hidden cells");
         }
@@ -148,8 +157,10 @@ export class AutoSnap {
 
         const monitor = window.get_monitor();
         const workArea = getWorkAreaForMonitor(monitor);
-        const layout = Layout.fromSettings(this._settings, this._settings.get_int("auto-snap-layout"));
-        const areas = this.getSlots(layout).map((slot) => this.slotArea(workArea, layout, slot));
+        const rule = this.getAppRule(window);
+        const layout = Layout.fromSettings(this._settings, rule?.layout ?? this._settings.get_int("auto-snap-layout"));
+        const configured = rule?.slots ?? (this._settings.get_value("auto-snap-slots").deepUnpack() as Slot[]);
+        const areas = this.getSlots(layout, configured).map((slot) => this.slotArea(workArea, layout, slot));
 
         const others = workspace
             .list_windows()

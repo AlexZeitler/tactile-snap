@@ -460,5 +460,10 @@
             <default>1</default>
             <summary>Layout used by auto-snap</summary>
         </key>
+        <key name="auto-snap-app-rules" type="a(sia(iiii))">
+            <default>[]</default>
+            <summary>Auto-snap layout and slots per application</summary>
+            <description>List of (desktop file id, layout, slots). Slots as in auto-snap-slots. Applications without a rule use auto-snap-layout and auto-snap-slots.</description>
+        </key>
     </schema>
 </schemalist>

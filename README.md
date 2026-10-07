@@ -47,6 +47,26 @@ gsettings --schemadir ~/.local/share/gnome-shell/extensions/tactile-snap@alexand
   set org.gnome.shell.extensions.tactile-snap auto-snap-layout 2
 ```
 
+### Layout and slots per application
+
+Windows of an application can use their own layout and slots, e.g. Google Chrome always spanning the whole grid of layout 2.
+Rules only apply while auto-snap is on.
+
+1. Open Preferences → Auto-snap.
+2. Click `+` next to "Applications", search for the application and choose it.
+3. Choose the layout and type the slots, as for all other applications. Example: `QV` spans the whole 4x3 grid.
+
+Click a rule to change it. Applications without a rule use the layout and slots above.
+
+Rules are stored in `auto-snap-app-rules` as a list of `(desktop file id, layout, slots)`:
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/tactile-snap@alexanderzeitler.com/schemas \
+  set org.gnome.shell.extensions.tactile-snap auto-snap-app-rules "[('google-chrome.desktop', 2, [(0,0,4,3)])]"
+```
+
+Installed web apps of Chrome have desktop files of their own and need rules of their own.
+
 ### Taking over existing Tactile settings
 
 ```sh
