@@ -66,7 +66,8 @@ export class AutoSnap {
         return (
             window.get_window_type() === Meta.WindowType.NORMAL &&
             !window.get_transient_for() &&
-            window.allows_resize() &&
+            // Mutter reports a maximized window as not resizable
+            (window.allows_resize() || this.isFullyMaximized(window)) &&
             !window.is_fullscreen()
         );
     }
@@ -96,7 +97,8 @@ export class AutoSnap {
             actor.disconnect(id);
             this._pendingFirstFrame.delete(actor);
 
-            if (this.isEnabled()) {
+            // On Wayland, type, parent and resizability are only known by now, not at window-created
+            if (this.isEnabled() && this.isSnappable(window)) {
                 this.snapToGrid(window);
             }
             this.trackWindow(window);
